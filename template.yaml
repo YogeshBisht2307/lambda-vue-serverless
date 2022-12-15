@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Application 
+
+Parameters:
+  ServerStage:
+    Type: String
+    Default: "test"
+    AllowedValues:
+      - "prod"
+      - "test"
+
+Globals:
+  Function:
+    Timeout: 10
+    
+Resources:
+  ServerlessApplicationApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Join [ "", [ !Ref ServerStage, "-ServerlessApplicationApi"]]
+      StageName: !Ref ServerStage
+      Description: 'Serverless Application Api'
+      EndpointConfiguration:
+        Type: REGIONAL
+      Cors:
+        AllowMethods: "'GET, POST, OPTIONS, DELETE, PUT'"
+        AllowOrigin: "'*'"
+        AllowHeaders: "'Content-type, Authorization'"
+
+  ServerlessApiLambdaLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+        LayerName: !Join [ "", [ !Ref ServerStage, "-ServerlessApiLambdaLayer"]]
+        Description: Dependencies for ServerlessApiLambdaLayer lambda functions
+        ContentUri: LamdaLayer/
+        CompatibleRuntimes:
+          - python3.9
+          - python3.8
+        RetentionPolicy: Retain
+  
+  ServerlessApiHandlerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join [ "", [ !Ref ServerStage, "-ServerlessApiHandlerExecutionRole"]]
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+
+      Policies:
+        - PolicyName: LambdaExecutionandLogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action: logs:CreateLogGroup
+              Resource: "*"
+            - Effect: Allow
+              Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              Resource: "*"
+
+        - PolicyName: DynamodbAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:GetItem
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:BatchWriteItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              Resource: "*"
+  
+        - PolicyName: SeceretManagerAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - secretsmanager:GetSecretValue
+              - secretsmanager:DescribeSecret
+              Resource: "*"
+
+  ServerlessApiHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join [ "", [ !Ref ServerStage, "-ServerlessApiHandler"]]
+      CodeUri: ServerlessApiHandler/
+      Handler: app.main.lamba_event_handler
+      Runtime: python3.9
+      Role: !GetAtt ServerlessApiHandlerExecutionRole.Arn
+      Layers:
+        - !Ref ServerlessApiLambdaLayer
+      Architectures:
+        - x86_64
+      Events:
+        Signup:
+          Type: Api
+          Properties:
+            Path: /auth/signup
+            Method: POST
+            RestApiId:
+              Ref: ServerlessApplicationApi
+        Signin:
+          Type: Api
+          Properties:
+            Path: /auth/signin
+            Method: POST
+            RestApiId:
+              Ref: ServerlessApplicationApi
+        GetUsers:
+          Type: Api
+          Properties:
+            Path: /users
+            Method: GET
+            RestApiId:
+              Ref: ServerlessApplicationApi
+
+  DynamoDbUserTable: 
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - AttributeName: "id"
+          AttributeType: "S"
+        - AttributeName: "email"
+          AttributeType: "S"
+        - AttributeName: "created"
+          AttributeType: "N"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      TableName: "User"
+      GlobalSecondaryIndexes: 
+        - IndexName: "GetByEmail"
+          KeySchema:
+            - AttributeName: "email"
+              KeyType: "HASH"
+          Projection: 
+            ProjectionType: "ALL"
+          ProvisionedThroughput: 
+            ReadCapacityUnits: "5"
+            WriteCapacityUnits: "5"
+        - IndexName: "SortedByCreated"
+          KeySchema: 
+            - AttributeName: "created"
+              KeyType: "HASH"
+          Projection: 
+            ProjectionType: "ALL"
+          ProvisionedThroughput: 
+            ReadCapacityUnits: "5"
+            WriteCapacityUnits: "5"
+
+Outputs:
+  ServerlessApplicationApi:
+    Description: "API Gateway endpoint URL for test stage"
+    Value: !Sub "https://${ServerlessApplicationApi}.execute-api.${AWS::Region}.amazonaws.com/test/"

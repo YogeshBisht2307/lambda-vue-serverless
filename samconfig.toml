@@ -1,0 +1,19 @@
+version = 0.1
+
+[test.deploy.parameters]
+stack_name = "serverless-application-test-stack"
+s3_bucket = "aws-sam-default-source-bucket"
+s3_prefix = "serverless-application-test-stack"
+region = "ap-south-1"
+confirm_changeset = true
+capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"]
+parameter_overrides = "ServerStage=\"test\""
+
+[prod.deploy.parameters]
+stack_name = "serverless-application-prod-stack"
+s3_bucket = "aws-sam-default-source-bucket"
+s3_prefix = "serverless-application-prod-stack"
+region = "ap-south-1"
+confirm_changeset = true
+capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"]
+parameter_overrides = "ServerStage=\"prod\""
