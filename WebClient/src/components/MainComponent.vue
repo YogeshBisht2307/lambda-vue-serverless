@@ -1,10 +1,12 @@
-<script setup>
+<script>
+export default {
+    props: ['msg']
+}
 </script>
 
 <template>
-    <title>Main Application</title>
     <section>
-        <h1>Main Application</h1>
+        <h1>{{ msg }}</h1>
     </section>
 </template>
 

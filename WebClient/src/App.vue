@@ -3,7 +3,7 @@ import MainComponent from './components/MainComponent.vue'
 </script>
 
 <template>
-  <MainComponent title="Main Application" />
+  <MainComponent msg="Welcome To Lambda-Vue Serverless Application" />
 </template>
 
 <style scoped>
