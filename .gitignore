@@ -30,13 +30,13 @@ lib/
 
 
 #amplify-do-not-edit-begin
-amplify/\#current-cloud-backend
-amplify/.config/local-*
-amplify/logs
-amplify/mock-data
-amplify/mock-api-resources
-amplify/backend/amplify-meta.json
-amplify/backend/.temp
+WebClient/amplify/\#current-cloud-backend
+WebClient/amplify/.config/local-*
+WebClient/amplify/logs
+WebClient/amplify/mock-data
+WebClient/amplify/mock-api-resources
+WebClient/amplify/backend/amplify-meta.json
+WebClient/amplify/backend/.temp
 build/
 dist/
 node_modules/
