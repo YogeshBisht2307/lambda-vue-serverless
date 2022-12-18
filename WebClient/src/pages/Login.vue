@@ -1,3 +1,64 @@
+<script>
+import { Form, Field } from 'vee-validate';
+import * as Yup from 'yup';
+import { setCookie } from '../components/utils.js'
+
+export default {
+    components: {
+        Form,
+        Field,
+    },
+    data() {
+        const formSchema = Yup.object().shape({
+            email: Yup.string()
+                .required('Email is required')
+                .email('Email is invalid'),
+            password: Yup.string()
+                .min(6, 'Password must be at least 6 characters')
+                .required('Password is required')
+        });
+        return {
+            formSchema: formSchema
+        }
+    },
+    methods: {
+        async onSubmit(values) {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_APP_API_BASE_ENDPOINT}/v1/auth/signin`, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "email": values.email,
+                        "password": values.password
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok | response.status != 200) {
+                    throw { ...result, ...{ 'code': response.status } }
+                }
+
+                setCookie("vueadmin-user-access-token", result.token)
+                this.$router.push('/dashboard')
+            } catch (error) {
+                console.error('error in user signin', JSON.stringify(error));
+                if (error?.code === 400) {
+                    console.log("Error in user input")
+                }
+                else if (error?.code === 404) {
+                    console.log("Url not found")
+                } else {
+                    console.log("Internal server error")
+                }
+            }
+        }
+    }
+}
+
+</script>
+
 <template>
     <section class="login-page">
         <div class="login-box">
@@ -7,22 +68,30 @@
                 </div>
                 <div class="login-card-body">
                     <p class="login-box-msg">Sign in to start your session</p>
-                    <form method="post">
-                        <div class="input-group mb-3">
-                            <input type="email" class="form-control" placeholder="Email">
-                            <div class="input-group-append">
-                                <div class="input-group-text">
-                                    <font-awesome-icon icon="fa-envelope" />
+                    <Form @submit="onSubmit" :validation-schema="formSchema" v-slot="{ errors }">
+                        <div class="input-container">
+                            <div class="input-group mb-3">
+                                <Field type="email" name="email" class="form-control" placeholder="Email"
+                                    :class="{ 'is-invalid': errors.email }" />
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <font-awesome-icon icon="fa-envelope" />
+                                    </div>
                                 </div>
                             </div>
+                            <p class="invalid-feedback">{{ errors.email }}</p>
                         </div>
-                        <div class="input-group mb-3">
-                            <input type="password" class="form-control" placeholder="Password">
-                            <div class="input-group-append">
-                                <div class="input-group-text">
-                                    <font-awesome-icon icon="fa-lock" />
+                        <div class="input-container">
+                            <div class="input-group mb-3">
+                                <Field type="password" name="password" class=" form-control" placeholder="Password"
+                                    :class="{ 'is-invalid': errors.password }" />
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <font-awesome-icon icon="fa-lock" />
+                                    </div>
                                 </div>
                             </div>
+                            <p class="invalid-feedback">{{ errors.password }}</p>
                         </div>
                         <div class="login-box-footer">
                             <p class="forgot-password-link">
@@ -32,8 +101,7 @@
                                 <button type="submit" class="btn-login">Sign In</button>
                             </div>
                         </div>
-                    </form>
-
+                    </Form>
                 </div>
             </div>
         </div>
@@ -89,7 +157,15 @@
     flex-wrap: wrap;
     align-items: stretch;
     width: 100%;
+}
+
+.input-container {
     margin-bottom: 1rem !important;
+}
+
+.input-container .invalid-feedback {
+    font-size: 12px;
+    color: red;
 }
 
 .form-control {

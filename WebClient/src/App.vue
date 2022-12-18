@@ -33,4 +33,8 @@ a {
 .text-center {
   text-align: center !important;
 }
+
+.is-invalid {
+  border-color: red !important;
+}
 </style>
