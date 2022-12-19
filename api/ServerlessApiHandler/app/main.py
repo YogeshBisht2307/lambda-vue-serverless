@@ -20,7 +20,7 @@ def signup_handler() -> Dict:
     return asyncio.run(user_signup_request_handler(application.current_event))
 
 
-@application.get("/users")
+@application.get("/auth/getUser")
 @login_required(application)
 def get_users_handler() -> Dict:
     return asyncio.run(get_users_request_handler(application.current_event))

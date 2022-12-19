@@ -46,8 +46,8 @@ async def user_signin_request_handler(event) -> Dict:
     }
     token = jwt.encode(
         payload, parameters.get_secret("LOGIN_JWT_SECRET"), algorithm="HS256")
-    return Response(status_code=200, body=json.dumps({'token': token}))
+    return Response(status_code=200, body=json.dumps({'token': token, "user": user.toDict()}))
 
 
 async def get_users_request_handler(event) -> Dict:
-    return Response(status_code=200, body=json.dumps({'user': event.request_context.identity.user.toDict()}))
+    return Response(status_code=200, body=json.dumps({'user': event.request_context.identity.user}))

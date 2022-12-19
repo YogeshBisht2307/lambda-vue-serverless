@@ -18,6 +18,9 @@ class User:
     def toDict(self) -> Dict[str, Any]:
         return asdict(self)
 
+    def __post_init__(self):
+        self.created = int(self.created)
+
     def hash_password(self, salt: bytes):
         self.password = (salt + "$".encode('utf-8') +
                          binascii.hexlify(PBKDF2(self.password, salt))).decode('utf-8')

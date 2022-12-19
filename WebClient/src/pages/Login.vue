@@ -1,5 +1,6 @@
 <script>
 import { Form, Field } from 'vee-validate';
+import { mapMutations } from "vuex";
 import * as Yup from 'yup';
 import { setCookie } from '../components/utils.js'
 
@@ -22,6 +23,7 @@ export default {
         }
     },
     methods: {
+        ...mapMutations(["setUser", "setToken"]),
         async onSubmit(values) {
             try {
                 const response = await fetch(`${import.meta.env.VITE_APP_API_BASE_ENDPOINT}/v1/auth/signin`, {
@@ -40,8 +42,9 @@ export default {
                     throw { ...result, ...{ 'code': response.status } }
                 }
 
-                setCookie("vueadmin-user-access-token", result.token)
-                this.$router.push('/dashboard')
+                this.setUser(result.user);
+                this.setToken(result.token);
+                this.$router.push('/admin/dashboard')
             } catch (error) {
                 console.error('error in user signin', JSON.stringify(error));
                 if (error?.code === 400) {

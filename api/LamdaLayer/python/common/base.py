@@ -19,13 +19,19 @@ def login_required(application) -> Callable:
             token = application.current_event.get_header_value(
                 name="X-APP-TOKEN", case_sensitive=False)
             if not token:
+                logger.debug("No token found in the header.")
                 return Response(status_code=401, body=json.dumps({"message": "Authorization Error"}))
 
-            payload = jwt.decode(
-                token.encode('utf-8'), parameters.get_secret("LOGIN_JWT_SECRET"), algorithms=["HS256"]
-            )
+            try:
+                payload = jwt.decode(
+                    token.encode('utf-8'), parameters.get_secret("LOGIN_JWT_SECRET"), algorithms=["HS256"]
+                )
+            except Exception as error:
+                logger.error(str(error))
+                return Response(status_code=401, body=json.dumps({"message": "Authorization Error"}))
 
             if payload['type'] != 'signin':
+                logger.debug("token type is not valid.")
                 return Response(status_code=401, body=json.dumps({"message": "Authorization Error"}))
 
             application.current_event.raw_event['requestContext']['identity']['user'] = payload['user']
